@@ -17,6 +17,7 @@
   - [Opções](#opções)
   - [Exemplos](#exemplos)
 - [Estrutura interna do script](#-estrutura-interna-do-script)
+- [removeAI.ps1 — Desativação de IA do Windows](#-removeaips1--desativação-de-ia-do-windows)
 - [Referências / inspiração](#-referências--inspiração)
 - [Aviso](#-aviso)
 
@@ -45,7 +46,7 @@
 
 4. **Mostra um relatório completo** de tudo que será removido e **pede confirmação explícita** antes de desinstalar qualquer coisa.
 
-5. **Pergunta separadamente** se o usuário também quer desativar/remover recursos de Inteligência Artificial do Windows (Copilot, Recall, componentes de IA, pacotes CBS de IA), usando o projeto [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) como motor dessa etapa. Essa etapa é **opcional** e só roda com confirmação própria (ou com a flag `-DisableWindowsAI`).
+5. **Pergunta separadamente** se o usuário também quer rodar a etapa de desativação de Inteligência Artificial do Windows, delegada ao script dedicado [`removeAI.ps1`](#-removeaips1--desativação-de-ia-do-windows) (ver seção própria abaixo). Essa etapa é **opcional** e só roda com confirmação própria (ou com a flag `-DisableWindowsAI`).
 
 6. **Registra tudo em dois arquivos de log** separados, na pasta do script:
 
@@ -80,8 +81,8 @@ O script vai:
 | `-FullScan` | Além dos programas instalados, varre todo o disco procurando arquivos de projeto/plugins de música (`.als`, `.flp`, `.rpp`, `.vst3`, etc.) para incluir no relatório de itens protegidos. Pode demorar bastante em discos grandes. |
 | `-PreservePaths` | Lista de caminhos a serem preservados integralmente. Padrão: `C:\Users\netok\Documentos`, `C:\Cakewalk Projects`, `C:\Cakewalk Content`, `C:\Arquivos de Programas\Ableton`, `C:\Arquivos de Programas\Cakewalk`. |
 | `-NonInteractive` | Pula as perguntas de confirmação e remove direto (uso avançado, ex.: automações). **Use com cuidado.** |
-| `-DisableWindowsAI` | Ativa a etapa de desativação/remoção dos recursos de IA do Windows (Copilot, Recall, componentes de IA) via RemoveWindowsAI. Em modo interativo, confirma antes de executar; em `-NonInteractive`, executa direto se esta flag estiver presente. |
-| `-RemoveWindowsAIScriptPath` | Caminho local para `RemoveWindowsAi.ps1`, caso já tenha o repositório [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) clonado. Se omitido, o script procura em pastas vizinhas e, não encontrando, baixa a versão oficial do GitHub para uma pasta temporária. |
+| `-DisableWindowsAI` | Aciona o script dedicado `removeAI.ps1` para desativar/remover os recursos de IA do Windows. Em modo interativo, `removeAI.ps1` confirma antes de executar; em `-NonInteractive`, executa direto se esta flag estiver presente. |
+| `-RemoveWindowsAIScriptPath` | Repassado para `removeAI.ps1`: caminho local para `RemoveWindowsAi.ps1`, caso já tenha o repositório [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) clonado. Se omitido, `removeAI.ps1` procura em pastas vizinhas e, não encontrando, baixa a versão oficial do GitHub para uma pasta temporária. |
 
 ### Exemplos
 
@@ -95,7 +96,7 @@ O script vai:
 # Preservar pastas diferentes das padrão
 .\performance_to_music.ps1 -PreservePaths "D:\Projetos","D:\Samples"
 
-# Também desativar recursos de IA do Windows, sem perguntar de novo
+# Também rodar a etapa de IA do Windows (removeAI.ps1), sem perguntar de novo
 .\performance_to_music.ps1 -NonInteractive -DisableWindowsAI
 
 # Usar uma cópia local do RemoveWindowsAI em vez de baixar do GitHub
@@ -133,6 +134,50 @@ O código não contém comentários explicativos — toda a documentação de ca
 10. **Confirmação** — se `-DryRun`, nunca remove; se `-NonInteractive`, remove sem perguntar; caso contrário, pergunta `sim/nao` e só prossegue com `sim`.
 
 11. **Remoção** — `Uninstall-Program` trata o Microsoft Edge como caso especial (uninstall padrão costuma estar bloqueado, por isso usa `setup.exe --uninstall --system-level --force-uninstall`); para os demais, usa `QuietUninstallString`/`UninstallString`, preferindo `msiexec /x <ProductCode> /qn` quando detecta um GUID, senão anexa flags silenciosas comuns (`/S /silent /quiet /norestart`). Pacotes AppX são removidos via `Remove-AppxPackage -AllUsers`. Cada resultado (sucesso ou falha) é gravado no log correspondente via `Write-Log -Level Success` / `Write-Log -Level Error`.
+
+12. **Etapa de IA do Windows** (opcional) — se confirmada (ou com `-DisableWindowsAI`), chama `removeAI.ps1` (na mesma pasta) como script externo, repassando `-NonInteractive` e `-RemoveWindowsAIScriptPath` quando aplicável. Ver seção dedicada abaixo.
+
+---
+
+## 🤖 removeAI.ps1 — Desativação de IA do Windows
+
+Script **independente**, dedicado exclusivamente a desativar/remover recursos de Inteligência Artificial do Windows (Copilot, Recall, componentes de IA, pacotes CBS de IA, políticas relacionadas), usando como motor o projeto [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI).
+
+Pode ser chamado automaticamente pelo `performance_to_music.ps1` (via `-DisableWindowsAI`) ou executado sozinho:
+
+```powershell
+.\removeAI.ps1
+```
+
+O script vai:
+1. Mostrar a lista de recursos de IA que serão desativados/removidos, com descrição de cada categoria.
+2. Perguntar `Confirma a desativacao/remocao de TODOS os itens de IA listados acima? (sim/nao)`.
+3. Só executar se a resposta for `sim`.
+4. Localizar (ou baixar) `RemoveWindowsAi.ps1` e executá-lo com as categorias escolhidas.
+
+### Opções
+
+| Parâmetro | Descrição |
+| --------- | --------- |
+| `-Options` | Lista de categorias a aplicar (mesmos valores aceitos pelo `RemoveWindowsAi.ps1`: `DisableRegKeys`, `PreventAIPackageReinstall`, `DisableCopilotPolicies`, `RemoveAppxPackages`, `RemoveRecallFeature`, `RemoveCBSPackages`, `RemoveAIFiles`, `HideAIComponents`, `DisableRewrite`, `RemoveWindowsAITasks`, `UpdateCleanupCheck`). Se omitido, aplica **todas**. |
+| `-DryRun` | Mostra a lista de recursos que seriam desativados, mas **nunca altera nada**. |
+| `-NonInteractive` | Pula a pergunta de confirmação e executa direto (uso avançado). |
+| `-RemoveWindowsAIScriptPath` | Caminho local para `RemoveWindowsAi.ps1`, caso já tenha o repositório [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) clonado. Se omitido, o script procura em `.\RemoveWindowsAI\RemoveWindowsAi.ps1` e `..\RemoveWindowsAI\RemoveWindowsAi.ps1` e, não encontrando, baixa a versão oficial do GitHub para uma pasta temporária. |
+
+### Exemplos
+
+```powershell
+# Ver o que seria desativado, sem alterar nada
+.\removeAI.ps1 -DryRun
+
+# Aplicar apenas a remoção do Recall e dos pacotes AppX de IA
+.\removeAI.ps1 -Options RemoveRecallFeature,RemoveAppxPackages
+
+# Rodar tudo sem perguntar, usando uma cópia local do RemoveWindowsAI
+.\removeAI.ps1 -NonInteractive -RemoveWindowsAIScriptPath "C:\Coding\RemoveWindowsAI\RemoveWindowsAi.ps1"
+```
+
+Assim como `performance_to_music.ps1`, gera seus próprios logs em `error_log\error_removeAI_<timestamp>.log` e `success_log\success_removeAI_<timestamp>.log`.
 
 ---
 

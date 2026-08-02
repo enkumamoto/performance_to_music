@@ -310,46 +310,9 @@ foreach ($item in $removalAppx) {
     }
 }
 
-function Get-RemoveWindowsAIScriptPath {
-    if ($RemoveWindowsAIScriptPath -and (Test-Path $RemoveWindowsAIScriptPath)) { return $RemoveWindowsAIScriptPath }
-
-    $candidates = @(
-        (Join-Path $PSScriptRoot 'RemoveWindowsAI\RemoveWindowsAi.ps1'),
-        (Join-Path (Split-Path $PSScriptRoot -Parent) 'RemoveWindowsAI\RemoveWindowsAi.ps1')
-    )
-    foreach ($c in $candidates) {
-        if (Test-Path $c) { return $c }
-    }
-
-    $tempScript = Join-Path $env:TEMP 'RemoveWindowsAi.ps1'
-    try {
-        Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/zoicware/RemoveWindowsAI/main/RemoveWindowsAi.ps1' -OutFile $tempScript -UseBasicParsing -ErrorAction Stop
-        return $tempScript
-    }
-    catch {
-        return $null
-    }
-}
-
-function Disable-WindowsAI {
-    Write-Log 'Preparando remocao/desativacao de recursos de IA do Windows (RemoveWindowsAI)...' 'Cyan'
-    $scriptPath = Get-RemoveWindowsAIScriptPath
-    if (-not $scriptPath) {
-        Write-Log 'Nao foi possivel localizar nem baixar o RemoveWindowsAi.ps1. Etapa de IA pulada.' 'Red' -Level Error
-        return
-    }
-    try {
-        & $scriptPath -nonInteractive -AllOptions
-        Write-Log 'Recursos de IA do Windows (Copilot, Recall, componentes AI) processados via RemoveWindowsAI.' 'Green' -Level Success
-    }
-    catch {
-        Write-Log "ERRO ao executar RemoveWindowsAI: $($_.Exception.Message)" 'Red' -Level Error
-    }
-}
-
 $runAIRemoval = $false
 if ($DryRun) {
-    if ($DisableWindowsAI) { Write-Log 'Modo -DryRun: recursos de IA do Windows NAO serao desativados.' 'Yellow' }
+    if ($DisableWindowsAI) { Write-Log 'Modo -DryRun: etapa de IA do Windows (removeAI.ps1) NAO sera executada.' 'Yellow' }
 }
 elseif ($NonInteractive) {
     $runAIRemoval = $DisableWindowsAI
@@ -359,13 +322,22 @@ elseif ($DisableWindowsAI) {
 }
 else {
     Write-Host ''
-    Write-Host '[OPCIONAL] O RemoveWindowsAI tambem pode desativar/remover: Copilot, Recall, componentes de IA do Windows, pacotes CBS de IA e politicas relacionadas.' -ForegroundColor Cyan
-    $answerAI = Read-Host 'Deseja tambem desativar os recursos de Inteligencia Artificial do Windows agora? (sim/nao)'
+    Write-Host '[OPCIONAL] O removeAI.ps1 pode desativar/remover: Copilot, Recall, componentes de IA do Windows, pacotes CBS de IA e politicas relacionadas.' -ForegroundColor Cyan
+    $answerAI = Read-Host 'Deseja rodar agora a etapa de desativacao de IA do Windows (removeAI.ps1)? (sim/nao)'
     $runAIRemoval = $answerAI.Trim().ToLower() -in @('s', 'sim', 'y', 'yes')
 }
 
 if ($runAIRemoval) {
-    Disable-WindowsAI
+    $removeAIScript = Join-Path $PSScriptRoot 'removeAI.ps1'
+    if (Test-Path $removeAIScript) {
+        Write-Log 'Chamando removeAI.ps1 para a etapa de IA do Windows...' 'Cyan'
+        $removeAIArgs = @{ NonInteractive = $NonInteractive.IsPresent }
+        if ($RemoveWindowsAIScriptPath) { $removeAIArgs['RemoveWindowsAIScriptPath'] = $RemoveWindowsAIScriptPath }
+        & $removeAIScript @removeAIArgs
+    }
+    else {
+        Write-Log "removeAI.ps1 nao encontrado em $PSScriptRoot. Etapa de IA pulada." 'Red' -Level Error
+    }
 }
 
 Write-Log 'Concluido. Recomenda-se reiniciar o computador.' 'Cyan'
