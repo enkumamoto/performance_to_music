@@ -1,6 +1,6 @@
 # SKILLS.md
 
-Capacidades e heurísticas implementadas por `performance_to_music.ps1`.
+Capacidades e heurísticas implementadas pelos scripts deste repositório: `performance_to_music.ps1` (limpeza/otimização) e `removeAI.ps1` (desativação de IA do Windows, seções 9-11).
 
 ## 1. Descoberta de programas instalados
 
@@ -50,10 +50,20 @@ Capacidades e heurísticas implementadas por `performance_to_music.ps1`.
   - `error_log\error_<timestamp>.log` — exclusivamente mensagens de erro/falha (`Write-Log -Level Error`).
   - `success_log\success_<timestamp>.log` — mensagens informativas e de sucesso (`Write-Log -Level Success`/`Info`, padrão).
 
-## 9. Desativação de recursos de Inteligência Artificial do Windows (opcional)
+## 9. Acionamento opcional do removeAI.ps1 (a partir de performance_to_music.ps1)
 
-- Pergunta específica e separada da remoção de navegadores/Office/HP: `Deseja tambem desativar os recursos de Inteligencia Artificial do Windows agora? (sim/nao)`. Também pode ser ativada direto com `-DisableWindowsAI` (funciona em modo `-NonInteractive`).
+- Pergunta específica e separada da remoção de navegadores/Office/HP: `Deseja rodar agora a etapa de desativacao de IA do Windows (removeAI.ps1)? (sim/nao)`. Também pode ser ativada direto com `-DisableWindowsAI` (funciona em modo `-NonInteractive`).
+- Se confirmado, `performance_to_music.ps1` localiza `removeAI.ps1` na mesma pasta (`$PSScriptRoot`) e o executa via operador `&`, repassando `-NonInteractive` e `-RemoveWindowsAIScriptPath` quando aplicável.
+- Nunca aciona `removeAI.ps1` em `-DryRun`. Se `removeAI.ps1` não for encontrado na pasta, registra erro (`error_log`) e segue sem interromper o restante do processo.
+
+## 10. removeAI.ps1 — script dedicado à desativação de IA do Windows
+
+- Script **independente**: tem seu próprio bloco de elevação para Administrador, seus próprios logs (`error_log\error_removeAI_<timestamp>.log`, `success_log\success_removeAI_<timestamp>.log`) e sua própria confirmação — pode ser executado sozinho (`.\removeAI.ps1`) ou chamado pelo `performance_to_music.ps1`.
+- `-Options` permite escolher um subconjunto das categorias do `RemoveWindowsAi.ps1` (`DisableRegKeys`, `PreventAIPackageReinstall`, `DisableCopilotPolicies`, `RemoveAppxPackages`, `RemoveRecallFeature`, `RemoveCBSPackages`, `RemoveAIFiles`, `HideAIComponents`, `DisableRewrite`, `RemoveWindowsAITasks`, `UpdateCleanupCheck`); sem o parâmetro, aplica todas.
+- Antes de executar, imprime a lista de categorias com descrição e pergunta `Confirma a desativacao/remocao de TODOS os itens de IA listados acima? (sim/nao)`. `-DryRun` nunca executa; `-NonInteractive` pula a pergunta.
 - `Get-RemoveWindowsAIScriptPath` localiza o `RemoveWindowsAi.ps1`: primeiro em `-RemoveWindowsAIScriptPath`, depois em pastas vizinhas (`.\RemoveWindowsAI\RemoveWindowsAi.ps1`, `..\RemoveWindowsAI\RemoveWindowsAi.ps1`), e por último baixa a versão oficial de `github.com/zoicware/RemoveWindowsAI` para uma pasta temporária.
-- `Disable-WindowsAI` executa esse script com `-nonInteractive -AllOptions`, cobrindo: chaves de registro de IA, políticas do Copilot, pacotes AppX de IA, recurso opcional Recall, pacotes CBS de IA, arquivos de IA, componentes ocultos de IA, reescrita de texto (Rewrite) e tarefas agendadas de IA.
-- Nunca roda em `-DryRun`. Falhas ao localizar/baixar/executar o script são registradas como erro (`error_log`), sem interromper o restante do processo.
-- Essa etapa não interage com `$MusicKeywords` nem com as pastas de `-PreservePaths` — ela é escopada exclusivamente a componentes de IA do próprio Windows, não a software de terceiros.
+- Executa esse script com `-nonInteractive -Options <categorias escolhidas>`, cobrindo: chaves de registro de IA, políticas do Copilot, pacotes AppX de IA, recurso opcional Recall, pacotes CBS de IA, arquivos de IA, componentes ocultos de IA, reescrita de texto (Rewrite) e tarefas agendadas de IA.
+
+## 11. Escopo isolado do removeAI.ps1
+
+- `removeAI.ps1` não interage com `$MusicKeywords` nem com as pastas de `-PreservePaths` — ele é escopado exclusivamente a componentes de IA do próprio Windows, não a software de terceiros, e não tem conhecimento das listas de proteção de `performance_to_music.ps1`.
