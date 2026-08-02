@@ -9,11 +9,12 @@ Script PowerShell para preparar um PC Windows para gravação e produção music
    - 🟢 **Protegido** — qualquer software relacionado a música (VST, VST2, VST3, IK Multimedia, iZotope, LANDR, Native Instruments, Neural DSP/Neural Amp Modeler, Steinberg, Ableton, FL Studio, Waves, etc.). Esses itens **nunca** são removidos.
    - 🔴 **Remover** — navegadores (incluindo Microsoft Edge), pacotes do Microsoft Office e software de impressoras HP.
 3. **Preserva integralmente** as pastas abaixo — nada dentro delas é tocado, independente do que for encontrado:
-   - `C:\Users\netok\Documentos`
+   - `C:\Users\<user_name>\Documentos`
    - `C:\Cakewalk Projects`
    - `C:\Cakewalk Content`
    - `C:\Arquivos de Programaa\Ableton`
    - `C:\Arquivos de Programaa\Cakewalk`
+     3.1. **Caso outras pastas necessitem de ser preservadas, deve-s adicioná-las ao código**
 4. **Mostra um relatório completo** de tudo que será removido e **pede confirmação explícita** antes de desinstalar qualquer coisa.
 5. **Pergunta separadamente** se o usuário também quer desativar/remover recursos de Inteligência Artificial do Windows (Copilot, Recall, componentes de IA, pacotes CBS de IA), usando o projeto [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) como motor dessa etapa. Essa etapa é opcional e só roda com confirmação própria (ou com a flag `-DisableWindowsAI`).
 6. Registra tudo em dois arquivos de log separados, na pasta do script:
@@ -29,6 +30,7 @@ Abra o PowerShell **como Administrador** (o script se eleva sozinho se necessár
 ```
 
 O script vai:
+
 1. Escanear programas instalados.
 2. Mostrar a lista do que será protegido e do que será removido.
 3. Perguntar `Confirma a remoção de TODOS os itens listados acima em [REMOVER]? (sim/nao)`.
@@ -37,13 +39,13 @@ O script vai:
 
 ### Opções
 
-| Parâmetro | Descrição |
-|---|---|
-| `-DryRun` | Mostra o relatório completo, mas nunca remove nada — útil para conferir antes de rodar de verdade. |
-| `-FullScan` | Além dos programas instalados, varre todo o disco procurando arquivos de projeto/plugins de música (`.als`, `.flp`, `.rpp`, `.vst3`, etc.) para incluir no relatório de itens protegidos. Pode demorar bastante em discos grandes. |
-| `-PreservePaths` | Lista de caminhos a serem preservados integralmente. Padrão: `C:\Users\netok\Documentos`, `C:\Cakewalk Projects`, `C:\Cakewalk Content`, `C:\Arquivos de Programaa\Ableton`, `C:\Arquivos de Programaa\Cakewalk`. |
-| `-NonInteractive` | Pula as perguntas de confirmação e remove direto (uso avançado, ex. automações). Use com cuidado. |
-| `-DisableWindowsAI` | Ativa a etapa de desativação/remoção dos recursos de IA do Windows (Copilot, Recall, componentes de IA) via RemoveWindowsAI. Em modo interativo, confirma antes de executar; em `-NonInteractive`, executa direto se esta flag estiver presente. |
+| Parâmetro                    | Descrição                                                                                                                                                                                                                                                                     |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-DryRun`                    | Mostra o relatório completo, mas nunca remove nada — útil para conferir antes de rodar de verdade.                                                                                                                                                                            |
+| `-FullScan`                  | Além dos programas instalados, varre todo o disco procurando arquivos de projeto/plugins de música (`.als`, `.flp`, `.rpp`, `.vst3`, etc.) para incluir no relatório de itens protegidos. Pode demorar bastante em discos grandes.                                            |
+| `-PreservePaths`             | Lista de caminhos a serem preservados integralmente. Padrão: `C:\Users\netok\Documentos`, `C:\Cakewalk Projects`, `C:\Cakewalk Content`, `C:\Arquivos de Programaa\Ableton`, `C:\Arquivos de Programaa\Cakewalk`.                                                             |
+| `-NonInteractive`            | Pula as perguntas de confirmação e remove direto (uso avançado, ex. automações). Use com cuidado.                                                                                                                                                                             |
+| `-DisableWindowsAI`          | Ativa a etapa de desativação/remoção dos recursos de IA do Windows (Copilot, Recall, componentes de IA) via RemoveWindowsAI. Em modo interativo, confirma antes de executar; em `-NonInteractive`, executa direto se esta flag estiver presente.                              |
 | `-RemoveWindowsAIScriptPath` | Caminho local para `RemoveWindowsAi.ps1`, caso já tenha o repositório [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) clonado. Se omitido, o script procura em pastas vizinhas e, não encontrando, baixa a versão oficial do GitHub para uma pasta temporária. |
 
 Exemplos:
@@ -83,11 +85,11 @@ O código não contém comentários explicativos — toda a documentação de ca
 9. **Relatório** — imprime no console as seções `[PROTEGIDO]` (pastas preservadas, programas de música, arquivos encontrados) e `[REMOVER]` (programas e pacotes AppX candidatos), e grava cada candidato no log.
 10. **Confirmação** — se `-DryRun`, nunca remove; se `-NonInteractive`, remove sem perguntar; caso contrário, pergunta `sim/nao` e só prossegue com `sim`.
 11. **Remoção** — `Uninstall-Program` trata o Microsoft Edge como caso especial (uninstall padrão costuma estar bloqueado, por isso usa `setup.exe --uninstall --system-level --force-uninstall`); para os demais, usa `QuietUninstallString`/`UninstallString`, preferindo `msiexec /x <ProductCode> /qn` quando detecta um GUID, senão anexa flags silenciosas comuns (`/S /silent /quiet /norestart`). Pacotes AppX são removidos via `Remove-AppxPackage -AllUsers`. Cada resultado (sucesso ou falha) é gravado no log correspondente via `Write-Log -Level Success` / `Write-Log -Level Error`.
-12. **Desativação de IA do Windows** (opcional) — `Get-RemoveWindowsAIScriptPath` procura `RemoveWindowsAi.ps1` primeiro em `-RemoveWindowsAIScriptPath`, depois em pastas vizinhas ao script (`.\RemoveWindowsAI\RemoveWindowsAi.ps1` e `..\RemoveWindowsAI\RemoveWindowsAi.ps1`) e, se não encontrar, baixa a versão oficial do GitHub (`zoicware/RemoveWindowsAI`) para uma pasta temporária. `Disable-WindowsAI` então executa esse script com `-nonInteractive -AllOptions`, aplicando todas as opções de remoção de IA dele (registro, políticas do Copilot, pacotes AppX de IA, recurso Recall, pacotes CBS de IA, arquivos de IA, tarefas agendadas de IA, etc.). Essa etapa só roda se o usuário confirmar a pergunta específica (`Deseja tambem desativar os recursos de Inteligencia Artificial do Windows agora?`) ou passar `-DisableWindowsAI` explicitamente; nunca roda em `-DryRun`.
 
 ## Referências / inspiração
 
 Este script segue convenções de estrutura e estilo dos projetos:
+
 - [ZOICWARE](https://github.com/zoicware/ZOICWARE)
 - [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI)
 
