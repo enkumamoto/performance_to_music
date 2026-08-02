@@ -14,6 +14,7 @@ Script PowerShell para preparar um PC Windows para gravação e produção music
    - `C:\Cakewalk Content`
    - `C:\Arquivos de Programaa\Ableton`
    - `C:\Arquivos de Programaa\Cakewalk`
+
 3.1. **Caso outras pastas necessitem de ser preservadas, deve-s adicioná-las ao código**
 4. **Mostra um relatório completo** de tudo que será removido e **pede confirmação explícita** antes de desinstalar qualquer coisa.
 5. **Pergunta separadamente** se o usuário também quer desativar/remover recursos de Inteligência Artificial do Windows (Copilot, Recall, componentes de IA, pacotes CBS de IA), usando o projeto [RemoveWindowsAI](https://github.com/zoicware/RemoveWindowsAI) como motor dessa etapa. Essa etapa é opcional e só roda com confirmação própria (ou com a flag `-DisableWindowsAI`).
