@@ -67,3 +67,9 @@ Capacidades e heurísticas implementadas pelos scripts deste repositório: `perf
 ## 11. Escopo isolado do removeAI.ps1
 
 - `removeAI.ps1` não interage com `$MusicKeywords` nem com as pastas de `-PreservePaths` — ele é escopado exclusivamente a componentes de IA do próprio Windows, não a software de terceiros, e não tem conhecimento das listas de proteção de `performance_to_music.ps1`.
+
+## 12. Lançadores .cmd (contorno da política de execução do PowerShell)
+
+- `performance_to_music.cmd` e `removeAI.cmd` resolvem o erro comum `... não pode ser carregado porque a execução de scripts foi desabilitada neste sistema` sem exigir que o usuário rode comandos manualmente.
+- Cada `.cmd` tenta primeiro `powershell -ExecutionPolicy Bypass -File <script>.ps1`; se o `errorlevel` indicar falha, aplica `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned -Force` e tenta novamente sem o bypass.
+- Essa lógica só pode existir fora do `.ps1`, porque a política de execução bloqueia o carregamento do arquivo antes de qualquer linha dele rodar.

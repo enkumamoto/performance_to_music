@@ -15,6 +15,7 @@ Não é um projeto com build/testes automatizados — são scripts standalone pe
 
 - `performance_to_music.ps1` — script principal de limpeza/otimização (navegadores, Office, HP, proteção de software de música).
 - `removeAI.ps1` — script dedicado exclusivamente à desativação/remoção de recursos de IA do Windows.
+- `performance_to_music.cmd` / `removeAI.cmd` — lançadores opcionais que contornam a política de execução do PowerShell (tentam `-ExecutionPolicy Bypass`; se falhar, aplicam `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` e tentam de novo) antes de chamar o `.ps1` correspondente.
 - `README.md` — documentação em português para o usuário final.
 - `.claude/SKILLS.md` — lista das capacidades/heurísticas que os scripts implementam.
 - Referências de estilo/estrutura usadas como base (fora deste repo):
@@ -49,3 +50,7 @@ Se o usuário pedir para remover uma nova categoria de software (ex.: outro fabr
 ## Ao adicionar novas categorias de proteção
 
 Basta adicionar termos a `$MusicKeywords` (para nomes de programas) e, se relevante, extensões a `$MusicFileExtensions` (para a varredura de arquivos com `-FullScan`).
+
+## Sobre os lançadores .cmd
+
+A política de execução do PowerShell bloqueia o carregamento do `.ps1` **antes** de qualquer linha dele rodar — por isso o fallback de política não pode viver dentro do próprio script PowerShell, só num wrapper externo. `performance_to_music.cmd` e `removeAI.cmd` existem só para isso: chamam `powershell -ExecutionPolicy Bypass -File <script>.ps1` e, se o `errorlevel` indicar falha, aplicam `Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned` e tentam novamente sem o bypass. Ao editar esses `.cmd`, manter os dois em sincronia (mesma lógica, só o nome do `.ps1` muda).

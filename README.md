@@ -65,6 +65,19 @@ Abra o PowerShell **como Administrador** (o script se eleva sozinho se necessár
 .\performance_to_music.ps1
 ```
 
+> ⚠️ **Política de execução do PowerShell:** por padrão, o Windows bloqueia a execução de arquivos `.ps1` locais (`... não pode ser carregado porque a execução de scripts foi desabilitada neste sistema.`). Esse bloqueio acontece **antes** de qualquer linha do script rodar, então não pode ser contornado por código dentro do próprio `.ps1`. Duas opções:
+>
+> 1. **Rodar com bypass nessa execução** (não altera nada no sistema):
+>    ```powershell
+>    powershell -ExecutionPolicy Bypass -File .\performance_to_music.ps1
+>    ```
+> 2. **Liberar permanentemente** para o seu usuário:
+>    ```powershell
+>    Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+>    ```
+>
+> Para não ter que lembrar disso, use os lançadores `performance_to_music.cmd` e `removeAI.cmd` incluídos neste repositório — basta dar duplo clique (ou `.\performance_to_music.cmd` no terminal). Cada um tenta primeiro a Opção 1 e, se falhar, aplica a Opção 2 automaticamente antes de rodar o script correspondente.
+
 O script vai:
 
 1. Escanear programas instalados.
@@ -148,6 +161,8 @@ Pode ser chamado automaticamente pelo `performance_to_music.ps1` (via `-DisableW
 ```powershell
 .\removeAI.ps1
 ```
+
+> ⚠️ Se aparecer o erro de política de execução, veja a nota na seção [Como usar](#-como-usar) acima — ou use `removeAI.cmd` deste repositório.
 
 O script vai:
 1. Mostrar a lista de recursos de IA que serão desativados/removidos, com descrição de cada categoria.

@@ -14,7 +14,8 @@
       "Bash(rm /tmp/branch_protection.json)",
       "Bash(git checkout *)",
       "Bash(git push *)",
-      "Bash(gh pr create --title 'Extrai desativacao de IA do Windows para removeAI.ps1' --body ' *)"
+      "Bash(gh pr create --title 'Extrai desativacao de IA do Windows para removeAI.ps1' --body ' *)",
+      "Bash(gh pr *)"
     ],
     "additionalDirectories": [
       "/private/tmp"
