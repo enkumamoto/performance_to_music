@@ -1,0 +1,12 @@
+# Logs gerados pelo script
+error_log/
+success_log/
+*.log
+
+# Windows / PowerShell
+Thumbs.db
+desktop.ini
+
+# Claude Code (config local, nao deve ser versionada)
+.claude/settings.local.json
+.claude/*.local.json

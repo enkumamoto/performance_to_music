@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls -la /Users/ronin/Documents/Coding/performance_to_music/ 2>&1; echo \"---ZOICWARE---\"; ls /Users/ronin/Documents/Coding/ZOICWARE 2>&1 | head -50; echo \"---RemoveWindowsAI---\"; ls /Users/ronin/Documents/Coding/RemoveWindowsAI 2>&1 | head -50)",
+      "Read(//Users/ronin/Documents/Coding/ZOICWARE/**)",
+      "Read(//Users/ronin/Documents/Coding/RemoveWindowsAI/**)",
+      "Read(//Users/ronin/Documents/Coding/ZOICWARE/src/**)",
+      "Bash(cat /Users/ronin/Documents/Coding/ZOICWARE/src/EdgeRemove.ps1 2>&1 | head -150)",
+      "Bash(gh auth *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
